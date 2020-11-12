@@ -5,7 +5,6 @@ import { NAV_TYPE_SIDE } from "constants/ThemeConstant";
 import { Scrollbars } from "react-custom-scrollbars";
 import MenuContent from "./MenuContent";
 import { onMobileNavToggle } from "redux/actions/Theme";
-import Logo from "./Logo";
 import Flex from "components/shared-components/Flex";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 
@@ -33,7 +32,6 @@ export const MobileNav = ({
     >
       <Flex flexDirection="column" className="h-100">
         <Flex justifyContent="between" alignItems="center">
-          <Logo mobileLogo={true} />
           <div className="nav-close" onClick={() => onClose()}>
             <ArrowLeftOutlined />
           </div>
