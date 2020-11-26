@@ -9,6 +9,7 @@ import SearchInput from './NavSearch/SearchInput.js'
 import { toggleCollapsedNav, onMobileNavToggle } from 'redux/actions/Theme';
 import { NAV_TYPE_TOP } from 'constants/ThemeConstant';
 import utils from 'utils'
+import NavDonationHistory from "./NavDonationHistory";
 
 const { Header } = Layout;
 
@@ -58,6 +59,7 @@ export const HeaderNav = props => {
           </div>
           <div className="nav-right">
             <NavNotification />
+            <NavDonationHistory/>
             <NavProfile />
           </div>
           <NavSearch active={searchActive} close={onSearchClose}/>
