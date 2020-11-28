@@ -1,22 +1,24 @@
 const typhoons = [
     {
         name: "ATSANI",
-        lastUpdate: new Date(),
+        lastUpdate: new Date(), //ngày giờ hiện tại
         predict: [
             {
-                timestamp: new Date(),
-                position: {
+                timestamp: new Date(), //ngày giờ của dự đoán
+                position: { //vị trí tâm bão
                     lat: 8.8,
                     lon: 147.4
                 },
-                hPa: 1000,
-                maxSusWind : [18,65],
-                radius15: 210,
+                hPa: 1000, //áp suất không khí
+                maxSusWind : [18,65], //vận tốc gió [m/s, km/h]
+                radius15: 210, 
                 radius25: null,
                 intensity: null,
                 movingDirection: "NNW",
                 movingSpeed: 31,
             },
+
+            //key - value
             {
                 timestamp: (new Date()).setDate(new Date().getDate() +1),
                 position: {
@@ -31,6 +33,7 @@ const typhoons = [
                 movingDirection: "NW",
                 movingSpeed: 22,
             },
+
             {
                 timestamp: (new Date()).setDate(new Date().getDate() +2),
                 position: {
@@ -45,6 +48,7 @@ const typhoons = [
                 movingDirection: "WNW",
                 movingSpeed: 23,
             },
+
             {
                 timestamp: (new Date()).setDate(new Date().getDate() +3),
                 position: {
@@ -59,6 +63,7 @@ const typhoons = [
                 movingDirection: "WNW",
                 movingSpeed: 22,
             },
+
             {
                 timestamp: (new Date()).setDate(new Date().getDate() +4),
                 position: {
@@ -73,6 +78,7 @@ const typhoons = [
                 movingDirection: "WNW",
                 movingSpeed: 21,
             },
+
             {
                 timestamp: (new Date()).setDate(new Date().getDate() +5),
                 position: {
@@ -87,6 +93,7 @@ const typhoons = [
                 movingDirection: "NW",
                 movingSpeed: 20,
             },
+
             {
                 timestamp: (new Date()).setDate(new Date().getDate() +6),
                 position: {
@@ -101,6 +108,7 @@ const typhoons = [
                 movingDirection: "NW",
                 movingSpeed: 14,
             },
+
             {
                 timestamp: (new Date()).setDate(new Date().getDate() +6),
                 position: {

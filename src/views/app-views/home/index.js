@@ -54,6 +54,8 @@ const Home = (props) => {
 		setShowMarkerModal(false);
 	}
 
+	//Hiển thị bảng nhập thông tin yêu cầu
+	//currenLatLng - chứa kinh độ và vĩ độ của điểm vừa nhấn
 	function onNewMarkerHandle(currenLatLng) {
 		setRequestImageList([]);
 		setCurrentMarkerLocation(currenLatLng);
@@ -91,101 +93,6 @@ const Home = (props) => {
 	}
 
 	const [windyMap, setWindyMap] = useState();
-
-	useEffect(() => {
-		if(!initMap) {
-			const options = {
-			key: 'PsLAtXpsPTZexBwUkO7Mx5I', 
-			lat: 16.047079,
-			lon: 108.206230,
-			zoom: 5,
-			};
-		
-			window.windyInit(options, windyAPI => {
-				const { map } = windyAPI;
-
-				setWindyMap(map);
-
-				map.options.maxZoom = 18;
-
-				var topLayer = window.L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(map);
-			
-				topLayer.setOpacity('0');       
-			
-				map.on('zoomend', function() {
-					if (map.getZoom() >= 12) {
-						topLayer.setOpacity('0.5');
-					} else {
-						topLayer.setOpacity('0');   
-					}
-				});
-
-				var typhoonGroup = window.L.layerGroup().addTo(map);
-				var CustomIcon = window.L.Icon.extend({options:{
-					iconSize:[20, 20],
-				}});
-				var eyeIcon = new CustomIcon({iconUrl: '/img/eyestorm.png'});
-				if(typhoons.length) {
-					typhoons.forEach(typhoon => {
-						typhoon.predict.forEach(dateData => {
-							var eyeStorm = window.L.marker([dateData.position.lat,dateData.position.lon],{icon: eyeIcon}).addTo(typhoonGroup);
-
-							eyeStorm.bindPopup("<p><b>Tên bão: "+typhoon.name+"</b><br>Cập nhật gần nhất: "+moment(typhoon.lastUpdate).format("DD-MM-YYYY HH:mm")+"</p>"+"<br><b>Dự đoán cho ngày "+moment(dateData.timestamp).format("DD-MM-YYYY")+" </b></p>"+"<br>Áp suất không khí tại tâm bão: "+dateData.hPa+" hPa</p>"+"<br>Tốc độ gió tối đa: "+dateData.maxSusWind[0]+" m/s ~ "+ dateData.maxSusWind[1] +" km/s</p>"+"<br>Hướng di chuyển: "+dateData.movingDirection+"</p>"+"<br>Tốc độ di chuyển: "+dateData.movingSpeed+" km/h</p>"+"<br>Bán kín vùng có sức gió trên 15m/s: "+dateData.radius15+" km</p>"+"<br>Bán kính vùng có sức gió trên 25m/s: "+dateData.radius25+" km</p>");
-
-							var circle15 = window.L.circle([dateData.position.lat,dateData.position.lon],{
-								color: 'blue',
-								weigth: '1',
-								radius: dateData.radius15 * 1000
-							}).addTo(typhoonGroup);
-
-							circle15.bindPopup("<p><b>Tên bão: "+typhoon.name+"</b><br>Cập nhật gần nhất: "+moment(typhoon.lastUpdate).format("DD-MM-YYYY HH:mm")+"</p>"+"<br><b>Dự đoán cho ngày "+moment(dateData.timestamp).format("DD-MM-YYYY")+" </b></p>"+"<br>Áp suất không khí tại tâm bão: "+dateData.hPa+" hPa</p>"+"<br>Tốc độ gió tối đa: "+dateData.maxSusWind[0]+" m/s ~ "+ dateData.maxSusWind[1] +" km/s</p>"+"<br>Hướng di chuyển: "+dateData.movingDirection+"</p>"+"<br>Tốc độ di chuyển: "+dateData.movingSpeed+" km/h</p>"+"<br>Bán kín vùng có sức gió trên 15m/s: "+dateData.radius15+" km</p>"+"<br>Bán kính vùng có sức gió trên 25m/s: "+dateData.radius25+" km</p>");
-
-							if(dateData.radius25) {
-								var circle25 = window.L.circle([dateData.position.lat,dateData.position.lon],{
-									color: 'red',
-									weigth: '1',
-									radius: dateData.radius25 * 1000
-								}).addTo(typhoonGroup);
-
-								circle25.bindPopup("<p><b>Tên bão: "+typhoon.name+"</b><br>Cập nhật gần nhất: "+moment(typhoon.lastUpdate).format("DD-MM-YYYY HH:mm")+"</p>"+"<br><b>Dự đoán cho ngày "+moment(dateData.timestamp).format("DD-MM-YYYY")+" </b></p>"+"<br>Áp suất không khí tại tâm bão: "+dateData.hPa+" hPa</p>"+"<br>Tốc độ gió tối đa: "+dateData.maxSusWind[0]+" m/s ~ "+ dateData.maxSusWind[1] +" km/s</p>"+"<br>Hướng di chuyển: "+dateData.movingDirection+"</p>"+"<br>Tốc độ di chuyển: "+dateData.movingSpeed+" km/h</p>"+"<br>Bán kín vùng có sức gió trên 15m/s: "+dateData.radius15+" km</p>"+"<br>Bán kính vùng có sức gió trên 25m/s: "+dateData.radius25+" km</p>");
-							}	
-						})
-					})
-				}
-
-				map.on('click', newRequest);
-
-				function newRequest(e) {
-					onNewMarkerHandle(e.latlng);
-				}
-
-				// var markerGroup = window.L.layerGroup().addTo(map);
-
-				// var CustomSOSIcon = window.L.Icon.extend({options:{
-				// 	iconSize:[30, 50],
-				// }});
-				// var sosIcon = new CustomSOSIcon({iconUrl: '/img/SOS.png'});		
-
-				// db.collection("sos-requests").where('status','==','ACTIVE').onSnapshot((querySnapshot)=> {
-				// 	markerGroup.clearLayers();
-				// 	querySnapshot.forEach((doc) => {
-				// 		if((!viewList.length)||(viewList.length && viewList.indexOf(doc.id)!==-1)) {
-				// 			var marker = window.L.marker({lat: doc.data().lat, lng: doc.data().lng},{icon: sosIcon}).addTo(markerGroup);
-				// 			marker.on('click',(e) => {
-				// 				handleMarkerShowInfo({id:doc.id,...doc.data()});
-				// 			});
-				// 		}
-
-				// 		// marker.bindPopup("<p>Người/Hộ gia đình: "+doc.data().username+"<br>Tình trạng hiện tại: "+doc.data().description+"</p>");
-				// 	})
-				// })
-			});  
-			setInitMap(true);
-		}
-		if(windyMap && !markerGroup) 				
-			setMarkerGroup(window.L.layerGroup().addTo(windyMap));
-		getAllRequest();
-	},[props.coords,viewList,windyMap,markerGroup]);
 
 	const confirmDonation = (value) => {
 		db.collection("sos-requests").doc(currentMarkerData.id).update({
@@ -510,9 +417,114 @@ const Home = (props) => {
 		setViewList(requestList);
 	};
 
+	//useEffect sẽ được chạy mỗi lần trang được load
+	useEffect(() => {
+		if(!initMap) {
+			const options = {
+			key: '468H4rgpZYfhh4gVJ0hiPRuEw8frlfZj', //khóa bản quyền - Map Forecast API
+			lat: 16.047079,
+			lon: 108.206230,
+			zoom: 5,
+			};
+		
+			//Khởi tạo bản đồ Windy
+			window.windyInit(options, windyAPI => {
+				const { map } = windyAPI;
+
+				setWindyMap(map);
+
+				map.options.maxZoom = 18; //cài đặt zoom tối đa
+
+				var topLayer = window.L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(map);
+			
+				topLayer.setOpacity('0');       
+			
+				map.on('zoomend', function() {
+					if (map.getZoom() >= 12) {
+						topLayer.setOpacity('0.5');
+					} else {
+						topLayer.setOpacity('0');   
+					}
+				});
+
+				var typhoonGroup = window.L.layerGroup().addTo(map); //Tạo nhóm marker bão
+
+				//Tạo icon hình con mắt
+				var CustomIcon = window.L.Icon.extend({options:{
+					iconSize:[20, 20],
+				}});
+				var eyeIcon = new CustomIcon({iconUrl: '/img/eyestorm.png'});
+
+				if(typhoons.length) {
+					typhoons.forEach(typhoon => {
+						typhoon.predict.forEach(dateData => {
+							var eyeStorm = window.L.marker([dateData.position.lat,dateData.position.lon],{icon: eyeIcon}).addTo(typhoonGroup); //tạo mắt bão
+
+							eyeStorm.bindPopup("<p><b>Tên bão: "+typhoon.name+"</b><br>Cập nhật gần nhất: "+moment(typhoon.lastUpdate).format("DD-MM-YYYY HH:mm")+"</p>"+"<br><b>Dự đoán cho ngày "+moment(dateData.timestamp).format("DD-MM-YYYY")+" </b></p>"+"<br>Áp suất không khí tại tâm bão: "+dateData.hPa+" hPa</p>"+"<br>Tốc độ gió tối đa: "+dateData.maxSusWind[0]+" m/s ~ "+ dateData.maxSusWind[1] +" km/s</p>"+"<br>Hướng di chuyển: "+dateData.movingDirection+"</p>"+"<br>Tốc độ di chuyển: "+dateData.movingSpeed+" km/h</p>"+"<br>Bán kín vùng có sức gió trên 15m/s: "+dateData.radius15+" km</p>"+"<br>Bán kính vùng có sức gió trên 25m/s: "+dateData.radius25+" km</p>"); //tạo thông tin khi nhấn vào mắt bão
+
+							var circle15 = window.L.circle([dateData.position.lat,dateData.position.lon],{
+								color: 'blue',
+								weigth: '1',
+								radius: dateData.radius15 * 1000
+							}).addTo(typhoonGroup); //tạo vòng tròn màu xanh hiện vùng tâm bão có sức gió lên đến 15m/s
+
+							circle15.bindPopup("<p><b>Tên bão: "+typhoon.name+"</b><br>Cập nhật gần nhất: "+moment(typhoon.lastUpdate).format("DD-MM-YYYY HH:mm")+"</p>"+"<br><b>Dự đoán cho ngày "+moment(dateData.timestamp).format("DD-MM-YYYY")+" </b></p>"+"<br>Áp suất không khí tại tâm bão: "+dateData.hPa+" hPa</p>"+"<br>Tốc độ gió tối đa: "+dateData.maxSusWind[0]+" m/s ~ "+ dateData.maxSusWind[1] +" km/s</p>"+"<br>Hướng di chuyển: "+dateData.movingDirection+"</p>"+"<br>Tốc độ di chuyển: "+dateData.movingSpeed+" km/h</p>"+"<br>Bán kín vùng có sức gió trên 15m/s: "+dateData.radius15+" km</p>"+"<br>Bán kính vùng có sức gió trên 25m/s: "+dateData.radius25+" km</p>");
+
+							if(dateData.radius25) {
+								var circle25 = window.L.circle([dateData.position.lat,dateData.position.lon],{
+									color: 'red',
+									weigth: '1',
+									radius: dateData.radius25 * 1000
+								}).addTo(typhoonGroup);//tạo vòng tròn màu đỏ hiện vùng tâm bão có sức gió lên đến 25m/s
+
+								circle25.bindPopup("<p><b>Tên bão: "+typhoon.name+"</b><br>Cập nhật gần nhất: "+moment(typhoon.lastUpdate).format("DD-MM-YYYY HH:mm")+"</p>"+"<br><b>Dự đoán cho ngày "+moment(dateData.timestamp).format("DD-MM-YYYY")+" </b></p>"+"<br>Áp suất không khí tại tâm bão: "+dateData.hPa+" hPa</p>"+"<br>Tốc độ gió tối đa: "+dateData.maxSusWind[0]+" m/s ~ "+ dateData.maxSusWind[1] +" km/s</p>"+"<br>Hướng di chuyển: "+dateData.movingDirection+"</p>"+"<br>Tốc độ di chuyển: "+dateData.movingSpeed+" km/h</p>"+"<br>Bán kín vùng có sức gió trên 15m/s: "+dateData.radius15+" km</p>"+"<br>Bán kính vùng có sức gió trên 25m/s: "+dateData.radius25+" km</p>");
+							}	
+						})
+					})
+				}
+
+				map.on('click', newRequest); //khi người dùng click vào bản đồ
+
+				function newRequest(e) {
+					//tham số e chứ lat, lng tại điểm click chuột
+					console.log(e.latlng);
+					onNewMarkerHandle(e.latlng);
+				}
+
+				// var markerGroup = window.L.layerGroup().addTo(map);
+
+				// var CustomSOSIcon = window.L.Icon.extend({options:{
+				// 	iconSize:[30, 50],
+				// }});
+				// var sosIcon = new CustomSOSIcon({iconUrl: '/img/SOS.png'});		
+
+				// db.collection("sos-requests").where('status','==','ACTIVE').onSnapshot((querySnapshot)=> {
+				// 	markerGroup.clearLayers();
+				// 	querySnapshot.forEach((doc) => {
+				// 		if((!viewList.length)||(viewList.length && viewList.indexOf(doc.id)!==-1)) {
+				// 			var marker = window.L.marker({lat: doc.data().lat, lng: doc.data().lng},{icon: sosIcon}).addTo(markerGroup);
+				// 			marker.on('click',(e) => {
+				// 				handleMarkerShowInfo({id:doc.id,...doc.data()});
+				// 			});
+				// 		}
+
+				// 		// marker.bindPopup("<p>Người/Hộ gia đình: "+doc.data().username+"<br>Tình trạng hiện tại: "+doc.data().description+"</p>");
+				// 	})
+				// })
+			});  
+			setInitMap(true);
+		}
+		if(windyMap && !markerGroup) 				
+			setMarkerGroup(window.L.layerGroup().addTo(windyMap));
+		getAllRequest();
+	},[props.coords,viewList,windyMap,markerGroup]);
+
+
 	return (
 		<>
+		{/* Chứa bản đồ Windy */}
 		<div id="windy"/>
+
 		<Button 
 			type="primary" 
 			shape="circle" 
@@ -527,6 +539,8 @@ const Home = (props) => {
 			icon={<AimOutlined />} 
 			style={{ position: 'absolute', right: 20, bottom: 50 }}
 		/>
+
+		{/* Modal thêm yêu cầu trợ giúp */}
 		<Modal
 			title="Thêm yêu cầu trợ giúp mới"
 			visible={showNewMarkerModal}
@@ -568,6 +582,8 @@ const Home = (props) => {
 				</Form.Item>
 			</Form>
 		</Modal>
+		{/* Modal thêm yêu cầu trợ giúp */}
+		
 		<Modal
 			title="Thông tin yêu cầu"
 			onCancel={hanldeMarkerCancel}
