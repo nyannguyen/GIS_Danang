@@ -8,7 +8,7 @@ import moment from 'moment';
 import { useSelector } from 'react-redux';
 import firebase from 'firebase/app';
 import { CheckOutlined, AimOutlined,InboxOutlined,EyeOutlined } from '@ant-design/icons';
-import { geolocated } from "react-geolocated";
+import { geolocated } from "react-geolocated"; //thư viện react-geolocated : cho phép lấy vị trí hiện tại của người dùng
 import typhoons from "./typhoon-data-test";
 
 const Home = (props) => {
@@ -25,11 +25,14 @@ const Home = (props) => {
 	const [user] = useState(useSelector(state=>state.auth));
 	const [requestListImage,setRequestImageList] = useState([]);
 
+	//xử lý khi người dùng nhấn vào sos marker
 	function handleMarkerShowInfo(data) {
 		var imgUrl = [];
 		
+		//kiểm tra có hình ảnh hay không
 		if(data.images.length){
 			Promise.all(data.images.map(async(imageName) => {
+				//lấy địa chỉ của ảnh: https://firebasestorage.googleapis.com/v0/b/git-danang.appspot.com/o/70290813_1245817982288270_6327554710496608256_o.jpg?alt=media&token=a7dcc8ab-01f4-48a3-a528-a16821552800
 				await storage.ref().child(imageName).getDownloadURL().then(url => {
 					imgUrl.push(url);
 				});
@@ -39,12 +42,13 @@ const Home = (props) => {
 					...data,
 					imgUrl: imgUrl
 				});
+				//hiện bảng hiện thông tin yêu cầu
 				setShowMarkerModal(true);
 			}) 
 		} else {
 			setCurrentMarkerData({
 				...data,
-				imgUrl: []
+				imgUrl: [] 
 			});
 			setShowMarkerModal(true);
 		}
@@ -78,15 +82,18 @@ const Home = (props) => {
 			status: "ACTIVE",
 			images: requestListImage,
 		}).then(()=> {
+			//hiện bảng thêm mới một yêu cầu trợ giúp
 			setShowNewMarkerModal(false);
 		});
 	}
 
+	//xóa yêu cầu
 	const deleteRequest = () => {
-		if(currentMarkerData.createdBy === user.token) {
+		if(currentMarkerData.createdBy === user.token) { //kiểm tra có đúng là người tạo không
 			db.collection("sos-requests").doc(currentMarkerData.id).update({
-				status: "DELETED"
+				status: "DELETED" //từ ACTIVE => DELETED
 			}).then(()=> {
+				//tắt bảng thông tin
 				setShowMarkerModal(false);
 			})
 		}
@@ -154,37 +161,56 @@ const Home = (props) => {
 	
 	const [showDonation,setShowDonation] = useState(false);
 	const handleDonationCancel = () => { setShowDonation(false) }
+
+	//Thêm mới hỗ trợ
 	const onDonationSubmit = (values) => {
 		db.collection("sos-requests").doc(currentMarkerData.id).update({
-			donators: firebase.firestore.FieldValue.arrayUnion(user.token),
+			donators: firebase.firestore.FieldValue.arrayUnion(user.token), //id của người hỗ trợ
 			donations: firebase.firestore.FieldValue.arrayUnion({
-				createdAt: new Date(),
-				money: values.money?values.money:0,
-				items: values.items?values.items:"",
-				confirmation: false,
-				createdByToken: user.token,
-				createdBy: firebase.auth().currentUser.displayName,
+				createdAt: new Date(), //ngày tháng hỗ trợ
+				money: values.money?values.money:0, //số tiền
+				items: values.items?values.items:"", //hiện vật
+				confirmation: false, //xác nhận
+				createdByToken: user.token, //id của người hỗ trợ
+				createdBy: firebase.auth().currentUser.displayName, //tên của người hỗ trợ
 			})
 		}).then(() => {
 			setShowDonation(false);
 			setShowMarkerModal(false);
+			message.success("Hỗ trợ thành công! Cảm ơn bạn!");
 		})
 	}
 
+	//lấy tất cả các request đang có trong cơ sở dữ liệu và hiển thị lên màn hình
 	const getAllRequest = () => {
 		if(windyMap && markerGroup){
+			//Tạo icon SOS
 			var CustomSOSIcon = window.L.Icon.extend({options:{
 				iconSize:[30, 50],
 			}});
 			var sosIcon = new CustomSOSIcon({iconUrl: '/img/SOS.png'});		
+			//Tạo icon SOS
 
+			//Lấy dữ liệu từ CSDL
+			//onSnapshot - Cung cấp bởi Google Firestore -> Khi có sự thay đổi trong dữ liệu, hàm này được gọi lại
+			//hàm onSnapshot trả về danh sách các documents (dữ liệu) -> thông tin về các request
 			db.collection("sos-requests").where('status','==','ACTIVE').onSnapshot((querySnapshot)=> {
+				//Tạo group markers cho các requests
 				markerGroup.clearLayers();
+
 				querySnapshot.forEach((doc) => {
 					if((!viewList.length)||(viewList.length && viewList.indexOf(doc.id)!==-1)) {
-						var marker = window.L.marker({lat: doc.data().lat, lng: doc.data().lng},{icon: sosIcon}).addTo(markerGroup);
+						var marker = window.L.marker({
+							lat: doc.data().lat, 
+							lng: doc.data().lng
+						},{icon: sosIcon}).addTo(markerGroup);
+
+						//khi mà người dùng nhấn vào marker -> gọi tới hàm handleMarkerShowInfo
 						marker.on('click',(e) => {
-							handleMarkerShowInfo({id:doc.id,...doc.data()});
+							handleMarkerShowInfo({
+								id:doc.id, //id của request
+								...doc.data() //dữ liệu của request
+							});
 						});
 					}
 
@@ -194,9 +220,12 @@ const Home = (props) => {
 		}
 	}
 
+	//lấy vị trí hiện tại của người dùng
 	const getCurrentLocation = () => {
+		//tạo group marker
 		var currentPositionGroup = window.L.layerGroup().addTo(windyMap);
 
+		//tạo icon
 		var CustomIcon = window.L.Icon.extend({options:{
 			iconSize:[20, 20],
 		}});
@@ -204,6 +233,7 @@ const Home = (props) => {
 
 		window.L.marker([props.coords.latitude, props.coords.longitude],{icon: locationIcon}).addTo(currentPositionGroup);
 
+		//di chuyển map đến vị trí người dùng
 		windyMap.setView([props.coords.latitude, props.coords.longitude],15);
 	}
 
@@ -238,36 +268,39 @@ const Home = (props) => {
 		showUploadList: false,
 	};
 
+	//báo cáo giả mạo
 	const reportRequest = (request) => {
 		db.collection("reports").doc(request.id).set({
 			reportBy: firebase.firestore.FieldValue.arrayUnion({
-				createdAt: new Date(),
-				createdByToken: user.token,
-				createdBy: firebase.auth().currentUser.displayName,
+				createdAt: new Date(), //thời điểm hiện tại
+				createdByToken: user.token, //báo cáo này được gửi bởi người dùng nào?
+				createdBy: firebase.auth().currentUser.displayName, //tên của người gửi báo cáo
 			}),
-			status: "PENDING"
+			status: "PENDING" //đang chờ duyệt
 		},{ merge: true }).then(() => {
 			setShowMarkerModal(false);
+			//hiện thông báo
 			message.warning("Cảm ơn đã báo cáo! Chúng tôi sẽ xem xét sớm!");
 		})
 	}
 
+	//xử lý khi người dùng thay đổi các tabs trong modal thông tin chi tiết
 	const onTabsChange = (key) => {
-		if(key.includes("3")) {
+		if(key.includes("3")) { //nếu người dùng nhấn vào tab thứ 3 - tab Thời tiết
 			if(!weatherData.ts){
-				fetch("https://api.windy.com/api/point-forecast/v2",{
+				fetch("https://api.windy.com/api/point-forecast/v2",{ //gọi tới api của Windy
 					method: "POST",
 					headers: {
 						Accept: 'application/json',
 						'Content-Type': 'application/json'
 					},
 					body: JSON.stringify({
-						"lat": currentMarkerData.lat,
-						"lon": currentMarkerData.lng,
-						"model": "gfs",
-						"parameters" : ["temp", "precip", "wind", "windGust","waves"],
+						"lat": currentMarkerData.lat, //vị trí của điểm muốn xem thời tiết
+						"lon": currentMarkerData.lng, //vị trí của điểm muốn xem thời tiết
+						"model": "gfs", //model gfs : lấy dữ liệu từ bản đồ toàn cầu - Windy yêu cầu
+						"parameters" : ["temp", "precip", "wind", "windGust","waves"], //thông tin thời tiết muốn lấy về
 						"levels": ["surface"],
-						"key": "kiJj3naYA6S2OEc8BALEc7qJDYS9J5HU"				
+						"key": "kiJj3naYA6S2OEc8BALEc7qJDYS9J5HU" //khóa Point Forecast api			
 					})					
 				}).then((response) => {
 					response.json().then(data => {
@@ -419,6 +452,7 @@ const Home = (props) => {
 
 	//useEffect sẽ được chạy mỗi lần trang được load
 	useEffect(() => {
+		//khởi tạo bản đồ Windy
 		if(!initMap) {
 			const options = {
 			key: '468H4rgpZYfhh4gVJ0hiPRuEw8frlfZj', //khóa bản quyền - Map Forecast API
@@ -532,6 +566,8 @@ const Home = (props) => {
 			icon={<EyeOutlined />} 
 			style={{ position: 'absolute', right: 20, bottom: 100 }}
 		/>
+
+		{/* Nút lấy vị trí hiện tại của người dùng */}
 		<Button 
 			type="primary" 
 			onClick={getCurrentLocation} 
@@ -584,6 +620,7 @@ const Home = (props) => {
 		</Modal>
 		{/* Modal thêm yêu cầu trợ giúp */}
 		
+		{/* Modal hiển thị thông tin chi tiết của yêu cầu */}
 		<Modal
 			title="Thông tin yêu cầu"
 			onCancel={hanldeMarkerCancel}
@@ -592,7 +629,10 @@ const Home = (props) => {
 			okButtonProps={{ style: { display: 'none' } }}
 			width={800}
 		>
-			<Collapse className="mb-3" defaultActiveKey={[1]} onChange={onTabsChange}>
+			{/* ml-{1-5}: margin left */}
+			{/* mt-{1-5}: margin top */}
+			{/* mb-3 : margin bottom  */}
+			<Collapse className="mb-3" defaultActiveKey={[1]} onChange={onTabsChange}> 
 				<Collapse.Panel header="Thông tin chung" key="1">
 					<p>
 						Ngày đăng tin: {moment(currentMarkerData.createdAt?.toDate()).format("DD-MM-YYYY HH:mm")}
@@ -625,6 +665,7 @@ const Home = (props) => {
 							<Pagination className="m-auto" simple defaultCurrent={currentWeatherPage} total={200} onChange={(page) => setCurrentWeatherPage(page)} />
 						</Row>
 						<Row gutter={16}>
+						{/* Hiển thị thời tiết  */}
 						{weatherData.ts?.slice((currentWeatherPage-1)*4,(currentWeatherPage-1)*4+4).map((timestamp,index) => 
 							<Col span={6}>
 								<Card title={moment(new Date(timestamp)).format("DD-MM HH:mm")} key={timestamp}>
@@ -648,7 +689,11 @@ const Home = (props) => {
 			<Button className="mr-3" danger onClick={() => reportRequest(currentMarkerData)}>Báo cáo giả mạo</Button>
 			<Button className="mr-3" type="primary" onClick={() => onShowPlanModal()}>Thêm vào kế hoạch</Button>
 			<Button className="mr-3" type="primary" onClick={() => setShowDonation(true)}>Thêm hỗ trợ</Button>
+			{/* mr-3: margin right */}
 		</Modal>
+		{/* Modal hiển thị thông tin chi tiết của yêu cầu */}
+
+		{/* Modal thêm hỗ trợ */}
 		<Modal
 			title="Nội dung hỗ trợ"
 			visible={showDonation}
@@ -679,6 +724,8 @@ const Home = (props) => {
 				</Form.Item>
 			</Form>
 		</Modal>
+		{/* Modal thêm hỗ trợ */}
+
 		<Modal
 			width={700}
 			title="Chọn kế hoạch"
@@ -698,6 +745,7 @@ const Home = (props) => {
 			<Tree.DirectoryTree onSelect={onPlanSelect} treeData={planList}/>
 			:<Skeleton active/>}
 		</Modal>
+		
 		<Modal
 			title="Thêm kế hoạch mới"
 			visible={showAddPlan}
