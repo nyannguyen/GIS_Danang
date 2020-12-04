@@ -7,7 +7,7 @@ import './home.css';
 import moment from 'moment';
 import { useSelector } from 'react-redux';
 import firebase from 'firebase/app';
-import { CheckOutlined, AimOutlined,InboxOutlined,EyeOutlined } from '@ant-design/icons';
+import { CheckOutlined, AimOutlined,InboxOutlined,EyeOutlined,SendOutlined } from '@ant-design/icons';
 import { geolocated } from "react-geolocated"; //thư viện react-geolocated : cho phép lấy vị trí hiện tại của người dùng
 import typhoons from "./typhoon-data-test";
 import { useHistory } from 'react-router-dom';
@@ -73,6 +73,7 @@ const Home = (props) => {
 		setShowNewMarkerModal(false);
 	}
 
+	//tạo yêu cầu
 	const onCreateRequest= (values) => {
 		db.collection("sos-requests").add({
 			username: values.username,
@@ -333,7 +334,7 @@ const Home = (props) => {
 	const [showAddPlan, setShowAddPlan] = useState(false);
 
 	const onPlanSelect = (selectedKey,info) => {
-		setSelectedPlan(info.node);
+		setSelectedPlan(info.node); //lưu lại thư mục đang chọn
 	}
 
 	const onAddToPlan = () => {
@@ -414,7 +415,8 @@ const Home = (props) => {
 	}
 
 	const removePlan = () => {
-		if(!selectedPlan.isLeaf){
+		//selectedPlan - kế hoạch đang được chọn
+		if(!selectedPlan.isLeaf){ //kiểm tra xem đang chọn kế hoạch hay điểm đến
 			db.collection("plans").doc(selectedPlan.key).delete().then(() => {
 				getPlanList()
 				message.success("Đã xóa kế hoạch!")
@@ -424,11 +426,12 @@ const Home = (props) => {
 		}
 	}
 
+	//thêm kế hoạch
 	const onCreatePlan= (values, type=0) => {
 		db.collection("plans").add({
-			createdAt: new Date(),
-			name: values.name,
-			createdByToken: user.token,
+			createdAt: new Date(), //ngày giờ tạo 
+			name: values.name, //tên kế hoạch
+			createdByToken: user.token, //id người tạo
 		}).then(()=> {
 			setShowAddPlan(false);
 			getPlanList();
@@ -544,6 +547,17 @@ const Home = (props) => {
 					onNewMarkerHandle(e.latlng);
 				}
 
+				var searchControl = window.L.esri.Geocoding.geosearch().addTo(map);
+
+				var results = window.L.layerGroup().addTo(map);
+			  
+				searchControl.on('results', function (data) {
+				  results.clearLayers();
+				  for (var i = data.results.length - 1; i >= 0; i--) {
+					results.addLayer(window.L.marker(data.results[i].latlng));
+				  }
+				});			  
+
 				// var markerGroup = window.L.layerGroup().addTo(map);
 
 				// var CustomSOSIcon = window.L.Icon.extend({options:{
@@ -590,7 +604,7 @@ const Home = (props) => {
 			type="primary" 
 			onClick={onRouting} 
 			shape="circle" 
-			icon={<AimOutlined />} 
+			icon={<SendOutlined />} 
 			style={{ position: 'absolute', right: 20, bottom: 150 }}
 		/>
 

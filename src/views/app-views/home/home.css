@@ -16,3 +16,7 @@
 #logo-wrapper{
     display: none;
 }
+
+#windy #map-container .leaflet-control-container{
+    display: inline !important;
+}

@@ -44,17 +44,6 @@ export const HeaderNav = props => {
                 <Menu.Item key="0" onClick={() => {onToggle()}}>
                   <MenuUnfoldOutlined className="nav-icon" />
                 </Menu.Item>
-              
-              {
-                isMobile ?
-                <Menu.Item key="1" onClick={() => {onSearchActive()}}>
-                  <SearchOutlined />
-                </Menu.Item>
-                :
-                <Menu.Item key="1" style={{cursor: 'auto'}}>
-                  <SearchInput mode={mode} isMobile={isMobile} />
-                </Menu.Item>
-              }
             </Menu>
           </div>
           <div className="nav-right">
