@@ -10,11 +10,6 @@ import { signOut } from 'redux/actions/Auth';
 import {auth} from 'auth/FirebaseAuth';
 
 const menuItem = [
-	{
-		title: "Edit Profile",
-		icon: EditOutlined ,
-		path: "/"
-    },
 ]
 
 export const NavProfile = ({signOut}) => {

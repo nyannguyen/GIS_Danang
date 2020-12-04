@@ -10,6 +10,7 @@ import firebase from 'firebase/app';
 import { CheckOutlined, AimOutlined,InboxOutlined,EyeOutlined } from '@ant-design/icons';
 import { geolocated } from "react-geolocated"; //thư viện react-geolocated : cho phép lấy vị trí hiện tại của người dùng
 import typhoons from "./typhoon-data-test";
+import { useHistory } from 'react-router-dom';
 
 const Home = (props) => {
 	const [markerGroup,setMarkerGroup] = useState();
@@ -24,6 +25,7 @@ const Home = (props) => {
 
 	const [user] = useState(useSelector(state=>state.auth));
 	const [requestListImage,setRequestImageList] = useState([]);
+	const history = useHistory();
 
 	//xử lý khi người dùng nhấn vào sos marker
 	function handleMarkerShowInfo(data) {
@@ -175,6 +177,13 @@ const Home = (props) => {
 				createdBy: firebase.auth().currentUser.displayName, //tên của người hỗ trợ
 			})
 		}).then(() => {
+			db.collection("notifications").add({
+				createdAt: new Date(),
+				createdByToken: user.token, //id của người hỗ trợ
+				message: "Bạn nhận được hỗ trợ mới từ "+firebase.auth().currentUser.displayName,
+				requestId: currentMarkerData.id,
+				requestOwnerId: currentMarkerData.createdBy
+			})
 			setShowDonation(false);
 			setShowMarkerModal(false);
 			message.success("Hỗ trợ thành công! Cảm ơn bạn!");
@@ -407,7 +416,7 @@ const Home = (props) => {
 	const removePlan = () => {
 		if(!selectedPlan.isLeaf){
 			db.collection("plans").doc(selectedPlan.key).delete().then(() => {
-				onShowPlanModal()
+				getPlanList()
 				message.success("Đã xóa kế hoạch!")
 			});
 		} else {
@@ -415,13 +424,14 @@ const Home = (props) => {
 		}
 	}
 
-	const onCreatePlan= (values) => {
+	const onCreatePlan= (values, type=0) => {
 		db.collection("plans").add({
+			createdAt: new Date(),
 			name: values.name,
 			createdByToken: user.token,
 		}).then(()=> {
-			onShowPlanModal()
 			setShowAddPlan(false);
+			getPlanList();
 		});
 	}
 
@@ -449,6 +459,15 @@ const Home = (props) => {
 		})
 		setViewList(requestList);
 	};
+
+	const onRouting = () => {
+		if(props.coords){
+			var pointList = Object.keys(markerGroup._layers).map(pointId => +markerGroup._layers[pointId]._latlng.lat+","+markerGroup._layers[pointId]._latlng.lng).join("%7C");
+			window.open("https://www.google.com/maps/dir/?api=1&origin="+props.coords.latitude+","+props.coords.longitude+"&destination="+props.coords.latitude+","+props.coords.longitude+"&travelmode=driving&waypoints="+pointList)
+		} else {
+			message.error("Không thể xác định vị trí của bạn");
+		}
+ 	}
 
 	//useEffect sẽ được chạy mỗi lần trang được load
 	useEffect(() => {
@@ -553,11 +572,27 @@ const Home = (props) => {
 		getAllRequest();
 	},[props.coords,viewList,windyMap,markerGroup]);
 
+	const showSummary = () => {
+		if(!selectedPlan.isLeaf){
+			history.push("/app/plan/"+selectedPlan.key);
+		} else {
+			message.error("Vui lòng chọn tên kế hoạch!")
+		}
+	}
 
 	return (
 		<>
 		{/* Chứa bản đồ Windy */}
 		<div id="windy"/>
+
+		{/* Nút chỉ đường */}
+		<Button 
+			type="primary" 
+			onClick={onRouting} 
+			shape="circle" 
+			icon={<AimOutlined />} 
+			style={{ position: 'absolute', right: 20, bottom: 150 }}
+		/>
 
 		<Button 
 			type="primary" 
@@ -689,6 +724,7 @@ const Home = (props) => {
 			<Button className="mr-3" danger onClick={() => reportRequest(currentMarkerData)}>Báo cáo giả mạo</Button>
 			<Button className="mr-3" type="primary" onClick={() => onShowPlanModal()}>Thêm vào kế hoạch</Button>
 			<Button className="mr-3" type="primary" onClick={() => setShowDonation(true)}>Thêm hỗ trợ</Button>
+			<Button className="mr-3" type="primary" onClick={() => window.open("https://www.google.com/maps/dir/?api=1&origin="+props.coords.latitude+","+props.coords.longitude+"&destination="+currentMarkerData.lat+","+currentMarkerData.lng+"&travelmode=driving")}>Chỉ đường</Button>
 			{/* mr-3: margin right */}
 		</Modal>
 		{/* Modal hiển thị thông tin chi tiết của yêu cầu */}
@@ -743,7 +779,27 @@ const Home = (props) => {
 		>
 			{planList.length?
 			<Tree.DirectoryTree onSelect={onPlanSelect} treeData={planList}/>
-			:<Skeleton active/>}
+			:<>Bạn chưa có kế hoạch nào, vui lòng tạo kế hoạch trước!</>}
+		</Modal>
+		
+		<Modal
+			width={700}
+			title="Chọn kế hoạch/điểm đến cần hiển thị"
+			visible={planViewModal}
+			onCancel={()=> showPlanViewModal(false)}
+			cancelButtonProps={{ style: { display: 'none' } }}
+			okButtonProps={{ style: { display: 'none' } }}
+			footer={
+				<>
+				<Button onClick={removePlan} danger>Xóa kế hoạch</Button>
+				<Button onClick={showSummary} type="primary">Xem tổng kết</Button>
+				<Button onClick={() => setShowAddPlan(true)} type="primary">Thêm kế hoạch</Button>
+				</>
+			}
+		>
+			{planList.length?
+			<Tree.DirectoryTree onCheck={onCheckPlan} onSelect={onPlanSelect} checkable treeData={planList}/>
+			:<>Bạn chưa có kế hoạch nào, vui lòng tạo kế hoạch trước!</>}
 		</Modal>
 		
 		<Modal
@@ -773,18 +829,6 @@ const Home = (props) => {
 			</Form>
 		</Modal>
 		
-		<Modal
-			width={700}
-			title="Chọn kế hoạch/điểm đến cần hiển thị"
-			visible={planViewModal}
-			onCancel={()=> showPlanViewModal(false)}
-			cancelButtonProps={{ style: { display: 'none' } }}
-			okButtonProps={{ style: { display: 'none' } }}
-		>
-			{planList.length?
-			<Tree.DirectoryTree onCheck={onCheckPlan} checkable treeData={planList}/>
-			:<Skeleton active/>}
-		</Modal>
 		
 		</>
 	)

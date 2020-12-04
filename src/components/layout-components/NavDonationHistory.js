@@ -69,16 +69,21 @@ export const NavDonationHistory = () => {
       db.collection("sos-requests").where("donators","array-contains", user.token ).onSnapshot(donations => { 
         setDonationHistory([]);
         donations.forEach(donation => {
-          setDonationHistory(oldValues => [...oldValues,{id: donation.id, ...donation.data()}]);
+          setDonationHistory(oldValues => [...oldValues,{
+                        
+            ...donation.data().donations.filter(donation => donation.createdByToken === user.token)
+          }]);
         })
       })
     }
   },[user.token])
 
+  console.log(donationHistory);
+
   const notificationList = (
     <div className="nav-dropdown nav-notification">
       <div className="nav-notification-header d-flex justify-content-between align-items-center">
-        <h4 className="mb-0">Notification</h4>
+        <h4 className="mb-0">Lịch sử hỗ trợ</h4>
         <Button type="link" onClick={() => setData([])} size="small">Clear </Button>
       </div>
       <div className="nav-notification-body">

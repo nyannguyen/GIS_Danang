@@ -59,7 +59,6 @@ export const HeaderNav = props => {
           </div>
           <div className="nav-right">
             <NavNotification />
-            <NavDonationHistory/>
             <NavProfile />
           </div>
           <NavSearch active={searchActive} close={onSearchClose}/>
